@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>コオベール新発田FC | 小学生サッカーチーム</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sakura:#F2A0B0;--sakura-lt:#FCE4EC;--cherry:#C0426A;--cherry-dk:#8B2A49;
+  --green:#2D6A4F;--green-lt:#D8F3DC;--white:#FFFFFF;--dark:#1A1A2E;--gray:#F7F3F5;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans JP',sans-serif;color:var(--dark);background:var(--white);overflow-x:hidden}
+
+/* ========== TOOLBAR ========== */
+#edit-toolbar{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  z-index:9999;background:var(--dark);color:white;border-radius:50px;padding:10px 20px;
+  display:flex;align-items:center;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,0.35);
+  font-size:13px;font-weight:700;white-space:nowrap;
+}
+.tb-label{opacity:.5;font-size:11px;letter-spacing:1px}
+.tb-btn{
+  background:rgba(255,255,255,.1);border:none;color:white;cursor:pointer;
+  padding:7px 18px;border-radius:30px;font-size:13px;font-weight:700;
+  font-family:'Noto Sans JP',sans-serif;transition:background .15s;
+}
+.tb-btn:hover{background:rgba(255,255,255,.2)}
+.tb-btn.active{background:var(--cherry)}
+.tb-btn.save-btn{background:var(--green)}
+.tb-btn.save-btn:hover{background:#1B4332}
+.tb-divider{width:1px;height:24px;background:rgba(255,255,255,.15)}
+#toast{
+  position:fixed;top:80px;left:50%;transform:translateX(-50%);
+  background:var(--green);color:white;padding:12px 28px;border-radius:50px;
+  font-size:14px;font-weight:700;z-index:9998;opacity:0;transition:opacity .3s;pointer-events:none;
+}
+#toast.show{opacity:1}
+
+/* ---- EDIT MODE ---- */
+body.edit-mode [contenteditable="true"]{outline:2px dashed var(--sakura);border-radius:4px;cursor:text}
+body.edit-mode [contenteditable="true"]:hover{outline:2px solid var(--cherry);background:rgba(242,160,176,.08)}
+body.edit-mode [contenteditable="true"]:focus{outline:2px solid var(--cherry);background:rgba(242,160,176,.12)}
+body:not(.edit-mode) [contenteditable="true"]{outline:none!important;cursor:inherit;pointer-events:none}
+
+/* ---- SORT MODE ---- */
+body.sort-mode .sortable-section{cursor:grab;outline:2px dashed rgba(192,66,106,.3);outline-offset:-4px}
+body.sort-mode .sortable-section:hover{outline:2px solid var(--cherry);outline-offset:-4px}
+body.sort-mode .sortable-section.dragging{opacity:.4;cursor:grabbing}
+body.sort-mode .sortable-section.drag-over{outline:3px solid var(--cherry);outline-offset:-4px;background:rgba(242,160,176,.06)}
+.drag-handle{
+  display:none;position:absolute;top:12px;right:16px;z-index:10;
+  background:var(--cherry);color:white;border-radius:8px;padding:6px 10px;
+  font-size:12px;font-weight:700;letter-spacing:1px;pointer-events:none;user-select:none;
+}
+body.sort-mode .sortable-section:hover .drag-handle{display:block}
+
+/* ========== HEADER ========== */
+header{
+  position:fixed;top:0;left:0;width:100%;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;padding:14px 32px;
+  background:rgba(255,255,255,.93);backdrop-filter:blur(8px);
+  border-bottom:2px solid var(--sakura);
+}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-emblem{
+  width:42px;height:42px;background:var(--cherry);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;color:white;font-size:16px;letter-spacing:1px;
+}
+.logo-text .en{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--cherry);letter-spacing:2px}
+.logo-text .jp{font-size:10px;color:#999}
+nav{display:flex;gap:24px}
+nav a{text-decoration:none;font-size:12px;font-weight:700;color:var(--dark);transition:color .2s}
+nav a:hover{color:var(--cherry)}
+
+/* ========== HERO ========== */
+#hero{
+  position:relative;height:100vh;min-height:580px;
+  background:linear-gradient(140deg,var(--cherry-dk) 0%,var(--cherry) 55%,var(--sakura) 100%);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.petal{position:absolute;background:rgba(255,255,255,.7);border-radius:50% 0 50% 0;animation:fall linear infinite}
+@keyframes fall{0%{transform:translateY(-60px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+.hero-content{position:relative;z-index:2;text-align:center;color:white;padding:0 24px}
+.hero-badge{
+  display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);
+  border-radius:30px;padding:6px 20px;font-size:11px;letter-spacing:3px;font-weight:700;
+  margin-bottom:24px;text-transform:uppercase;
+}
+.hero-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(60px,13vw,130px);line-height:.88;letter-spacing:4px;
+  text-shadow:0 4px 24px rgba(0,0,0,.25);
+}
+.hero-jp{
+  display:block;font-family:'Noto Sans JP',sans-serif;
+  font-size:clamp(18px,3.5vw,32px);font-weight:900;letter-spacing:8px;margin-top:10px;
+}
+.hero-catch{font-size:clamp(13px,2vw,17px);margin-top:20px;opacity:.88;font-weight:400;line-height:1.8}
+.hero-cta{
+  display:inline-block;margin-top:36px;background:white;color:var(--cherry);
+  font-weight:900;font-size:14px;letter-spacing:2px;padding:15px 44px;border-radius:50px;
+  text-decoration:none;box-shadow:0 8px 32px rgba(0,0,0,.2);transition:transform .2s,box-shadow .2s;
+}
+.hero-cta:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+
+/* ========== COMMON SECTION ========== */
+section.page-section{padding:88px 24px;position:relative}
+.sec-label{font-size:10px;letter-spacing:4px;font-weight:700;color:var(--cherry);text-transform:uppercase;margin-bottom:10px}
+.sec-title{font-size:clamp(26px,5vw,46px);font-weight:900;line-height:1.2;margin-bottom:36px}
+.container{max-width:960px;margin:0 auto}
+
+/* ========== ① CONCEPT ========== */
+#concept{background:var(--gray)}
+.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.concept-visual{
+  aspect-ratio:1;max-width:400px;
+  background:linear-gradient(145deg,var(--green) 0%,#1B4332 100%);
+  border-radius:24px;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.concept-visual::before{content:'';position:absolute;inset:15%;border:3px solid rgba(255,255,255,.25);border-radius:50%}
+.concept-visual::after{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:rgba(255,255,255,.2);transform:translateY(-50%)}
+.cv-ball{font-size:80px;position:relative;z-index:1}
+.concept-lead{font-size:17px;font-weight:900;color:var(--cherry);line-height:1.7;margin-bottom:20px}
+.concept-body{font-size:15px;line-height:2;color:#444}
+.concept-origin{
+  margin-top:28px;background:white;border-radius:14px;padding:20px 24px;
+  border-left:4px solid var(--green);
+}
+.concept-origin .co-label{font-size:10px;letter-spacing:3px;font-weight:700;color:var(--green);margin-bottom:8px}
+.concept-origin p{font-size:13px;line-height:1.9;color:#555}
+
+/* ========== ② SKILLS ========== */
+#skills{background:white}
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
+.skill-card{
+  background:var(--sakura-lt);border-radius:20px;padding:28px 24px;
+  border:2px solid transparent;transition:border-color .2s,transform .2s;
+  text-align:center;
+}
+.skill-card:hover{border-color:var(--sakura);transform:translateY(-4px)}
+.skill-icon{font-size:44px;margin-bottom:14px}
+.skill-card h3{font-size:16px;font-weight:900;color:var(--cherry);margin-bottom:10px}
+.skill-card p{font-size:13px;line-height:1.8;color:#555}
+
+/* ========== ③ GALLERY ========== */
+#gallery{background:var(--dark)}
+#gallery .sec-label{color:var(--sakura)}
+#gallery .sec-title{color:white}
+.gallery-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+}
+.gallery-cell{
+  aspect-ratio:4/3;border-radius:12px;overflow:hidden;
+  background:rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;
+  font-size:48px;cursor:pointer;position:relative;
+  border:2px dashed rgba(255,255,255,.15);
+  transition:border-color .2s;
+}
+.gallery-cell:hover{border-color:var(--sakura)}
+.gallery-cell img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.gallery-cell .gc-placeholder{position:relative;z-index:1;text-align:center}
+.gallery-cell .gc-placeholder span{display:block;font-size:12px;color:rgba(255,255,255,.4);margin-top:8px;font-weight:700}
+.gallery-hint{margin-top:16px;text-align:center;font-size:12px;color:rgba(255,255,255,.35);display:none}
+body.edit-mode .gallery-hint{display:block}
+/* 画像アップロード（編集モード時のみ） */
+body.edit-mode .gallery-cell{cursor:pointer}
+body:not(.edit-mode) .gallery-cell{cursor:default}
+
+/* ========== ④ RECRUIT ========== */
+#recruit{background:var(--gray)}
+.recruit-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-bottom:40px}
+.recruit-card{
+  background:white;border-radius:20px;padding:28px 24px;
+  border-left:5px solid var(--sakura);
+}
+.recruit-card .rc-icon{font-size:36px;margin-bottom:12px}
+.recruit-card h3{font-size:16px;font-weight:900;color:var(--cherry);margin-bottom:8px}
+.recruit-card p{font-size:13px;line-height:1.8;color:#555}
+.recruit-info-bar{
+  background:var(--cherry);color:white;border-radius:20px;padding:36px 40px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:28px;
+}
+.ri-item h4{font-size:10px;letter-spacing:3px;opacity:.7;margin-bottom:6px}
+.ri-item p{font-size:15px;font-weight:700}
+
+/* ========== ⑤ LINE ========== */
+#line-section{background:white}
+.line-wrap{max-width:500px;margin:0 auto;text-align:center}
+.line-card{
+  background:#06C755;border-radius:24px;padding:48px 40px;color:white;
+  box-shadow:0 12px 48px rgba(6,199,85,.2);
+}
+.line-logo{font-size:68px;margin-bottom:16px}
+.line-card h3{font-size:22px;font-weight:900;margin-bottom:12px}
+.line-card .lc-desc{font-size:14px;opacity:.9;line-height:1.9;margin-bottom:28px}
+.line-url-row{
+  background:rgba(255,255,255,.15);border-radius:10px;padding:12px 18px;
+  margin-bottom:24px;text-align:left;
+}
+.line-url-row .lu-label{font-size:10px;opacity:.7;letter-spacing:2px;font-weight:700;margin-bottom:4px}
+#line-url-display{font-size:13px;font-weight:700;word-break:break-all}
+.line-add-btn{
+  display:inline-block;background:white;color:#06C755;
+  font-weight:900;font-size:15px;padding:15px 40px;border-radius:50px;
+  text-decoration:none;letter-spacing:1px;
+  box-shadow:0 4px 20px rgba(0,0,0,.12);transition:transform .2s,box-shadow .2s;
+}
+.line-add-btn:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.2)}
+/* 管理者URL設定 */
+#line-admin-wrap{
+  margin-top:28px;background:rgba(255,255,255,.12);border-radius:14px;padding:20px;
+  display:none;text-align:left;
+}
+body.admin-logged #line-admin-wrap{display:block}
+#line-admin-wrap label{font-size:11px;font-weight:700;opacity:.8;letter-spacing:1px;display:block;margin-bottom:8px}
+#line-url-input{
+  width:100%;padding:11px 14px;border-radius:8px;border:none;
+  font-size:13px;font-family:'Noto Sans JP',sans-serif;color:var(--dark);margin-bottom:8px;outline:none;
+}
+#line-save-btn{
+  background:var(--dark);color:white;border:none;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:13px;
+  padding:9px 22px;border-radius:30px;transition:background .15s;
+}
+#line-save-btn:hover{background:#333}
+
+/* ========== BOARD ========== */
+#board{background:var(--sakura-lt)}
+.admin-login-area{display:flex;gap:10px;align-items:center;margin-bottom:28px;flex-wrap:wrap}
+.admin-login-area input{
+  padding:10px 16px;border:1.5px solid var(--sakura);border-radius:30px;
+  font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none;background:white;
+  transition:border-color .2s;
+}
+.admin-login-area input:focus{border-color:var(--cherry)}
+.admin-login-area button{
+  padding:10px 22px;border-radius:30px;border:none;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:13px;
+  background:var(--cherry);color:white;transition:background .15s;
+}
+.admin-login-area button:hover{background:var(--cherry-dk)}
+#admin-status{font-size:13px;color:var(--green);font-weight:700}
+#post-form-wrap{
+  background:white;border-radius:16px;padding:28px;margin-bottom:32px;
+  border:2px solid var(--sakura);display:none;
+}
+#post-form-wrap h3{font-size:15px;font-weight:900;color:var(--cherry);margin-bottom:14px}
+#post-form-wrap input[type="text"],#post-form-wrap textarea{
+  width:100%;padding:12px 16px;border:1.5px solid #ddd;border-radius:10px;
+  font-family:'Noto Sans JP',sans-serif;font-size:14px;outline:none;
+  transition:border-color .2s;margin-bottom:10px;
+}
+#post-form-wrap input[type="text"]:focus,#post-form-wrap textarea:focus{border-color:var(--cherry)}
+#post-form-wrap textarea{resize:vertical;min-height:90px}
+.post-form-actions{display:flex;gap:10px}
+.btn-post{
+  background:var(--cherry);color:white;border:none;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:14px;
+  padding:11px 26px;border-radius:30px;transition:background .15s;
+}
+.btn-post:hover{background:var(--cherry-dk)}
+.btn-cancel{
+  background:#eee;color:#555;border:none;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:14px;
+  padding:11px 18px;border-radius:30px;transition:background .15s;
+}
+.btn-cancel:hover{background:#ddd}
+.btn-new-post{
+  display:none;margin-bottom:20px;background:var(--cherry);color:white;border:none;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:14px;
+  padding:11px 26px;border-radius:30px;transition:background .15s;
+}
+.btn-new-post:hover{background:var(--cherry-dk)}
+body.admin-logged .btn-new-post{display:inline-block}
+#board-list{display:flex;flex-direction:column;gap:16px}
+.board-empty{text-align:center;color:#aaa;font-size:14px;padding:40px 0}
+.board-card{
+  background:white;border-radius:14px;padding:22px 26px;
+  border-left:5px solid var(--sakura);position:relative;
+  box-shadow:0 2px 12px rgba(192,66,106,.07);
+}
+.bc-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.bc-tag{background:var(--cherry);color:white;font-size:10px;font-weight:900;padding:3px 10px;border-radius:20px}
+.bc-date{font-size:12px;color:#aaa}
+.board-card h4{font-size:16px;font-weight:900;margin-bottom:6px}
+.board-card p{font-size:14px;color:#555;line-height:1.8;white-space:pre-wrap}
+.bc-delete{
+  position:absolute;top:14px;right:14px;background:none;border:1.5px solid #ddd;color:#bbb;
+  border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;transition:all .15s;display:none;
+}
+.bc-delete:hover{background:#fee;border-color:#f99;color:#c33}
+body.admin-logged .bc-delete{display:block}
+
+/* ========== FOOTER ========== */
+footer{background:var(--cherry-dk);color:rgba(255,255,255,.7);text-align:center;padding:32px 24px;font-size:13px}
+footer .ft-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;color:white;letter-spacing:3px;margin-bottom:6px}
+
+/* ========== RESPONSIVE ========== */
+@media(max-width:680px){
+  header{padding:12px 18px}
+  nav{gap:14px}
+  nav a{font-size:11px}
+  .concept-grid{grid-template-columns:1fr}
+  .concept-visual{display:none}
+  .gallery-grid{grid-template-columns:repeat(2,1fr)}
+  .recruit-info-bar{padding:24px 20px}
+}
+@media(prefers-reduced-motion:reduce){.petal{animation:none;display:none}}
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div id="edit-toolbar">
+  <span class="tb-label">🛠 編集ツール</span>
+  <button class="tb-btn" id="btn-text" onclick="toggleTextEdit()">✏️ テキスト編集</button>
+  <div class="tb-divider"></div>
+  <button class="tb-btn" id="btn-sort" onclick="toggleSortMode()">↕️ 並び替え</button>
+  <div class="tb-divider"></div>
+  <button class="tb-btn save-btn" onclick="saveHTML()">💾 HTMLを保存</button>
+</div>
+<div id="toast">✅ ダウンロードしました！</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-emblem">CSC</div>
+    <div class="logo-text">
+      <div class="en">COOPERVE SHIBATA FC</div>
+      <div class="jp">コオベール新発田FC</div>
+    </div>
+  </div>
+  <nav>
+    <a href="#concept">コンセプト</a>
+    <a href="#skills">身につくもの</a>
+    <a href="#gallery">活動の様子</a>
+    <a href="#recruit">募集</a>
+    <a href="#line-section">公式LINE</a>
+    <a href="#board">お知らせ</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section id="hero">
+  <div id="petals"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Cooperación + Verde · Shibata, Niigata</div>
+    <h1 class="hero-title">
+      COOPERVE<br>SHIBATA FC
+      <span class="hero-jp" contenteditable="true">コオベール新発田FC</span>
+    </h1>
+    <p class="hero-catch" contenteditable="true">緑のピッチで繋がる仲間たち。<br>協力・成長・挑戦 — ここから始まる。</p>
+    <a href="#recruit" class="hero-cta" contenteditable="true">⚽ 仲間を募集中</a>
+  </div>
+</section>
+
+<!-- ① CONCEPT -->
+<section id="concept" class="page-section sortable-section">
+  <div class="drag-handle">⠿ ドラッグで移動</div>
+  <div class="container">
+    <div class="concept-grid">
+      <div class="concept-visual"><span class="cv-ball">⚽</span></div>
+      <div>
+        <p class="sec-label">① TEAM CONCEPT</p>
+        <h2 class="sec-title" contenteditable="true">チームコンセプト</h2>
+        <p class="concept-lead" contenteditable="true">「楽しむこと」が、すべての出発点。</p>
+        <p class="concept-body" contenteditable="true">コオベール新発田FCは、新潟県新発田市を拠点に活動する小学生サッカーチームです。勝利よりも「仲間と共に成長する喜び」を大切に、一人ひとりの個性を活かした指導を行っています。</p>
+        <div class="concept-origin">
+          <p class="co-label">🌿 チーム名の由来</p>
+          <p contenteditable="true">Cooperación（協力）＋ Verde（緑）。緑のピッチでの連携、そして若葉のように無限に成長する子どもたちへの想いを込めています。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ② SKILLS -->
+<section id="skills" class="page-section sortable-section">
+  <div class="drag-handle">⠿ ドラッグで移動</div>
+  <div class="container">
+    <p class="sec-label">② WHAT YOU GAIN</p>
+    <h2 class="sec-title" contenteditable="true">身につくもの</h2>
+    <div class="skills-grid">
+      <div class="skill-card">
+        <div class="skill-icon">⚡</div>
+        <h3 contenteditable="true">技術力</h3>
+        <p contenteditable="true">ドリブル・パス・シュートの基礎から、試合で使える応用技術まで段階的に習得します。</p>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">🧠</div>
+        <h3 contenteditable="true">判断力</h3>
+        <p contenteditable="true">試合の流れを読み、瞬時に判断する力。サッカーで磨かれた思考力は生活にも活きます。</p>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">🤝</div>
+        <h3 contenteditable="true">協調性</h3>
+        <p contenteditable="true">チームメイトを信頼し、声をかけ合う。仲間と協力することの大切さを体で学びます。</p>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">💪</div>
+        <h3 contenteditable="true">体力・精神力</h3>
+        <p contenteditable="true">継続して練習に取り組む中で、体の強さだけでなく、諦めない心が育まれます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ③ GALLERY -->
+<section id="gallery" class="page-section sortable-section">
+  <div class="drag-handle">⠿ ドラッグで移動</div>
+  <div class="container">
+    <p class="sec-label" style="color:var(--sakura)">③ ACTIVITY</p>
+    <h2 class="sec-title" style="color:white" contenteditable="true">活動の様子</h2>
+    <div class="gallery-grid" id="gallery-grid">
+      <!-- セルはJSで生成 -->
+    </div>
+    <p class="gallery-hint">📷 テキスト編集モードでセルをクリックすると画像をアップロードできます</p>
+  </div>
+</section>
+
+<!-- ④ RECRUIT -->
+<section id="recruit" class="page-section sortable-section">
+  <div class="drag-handle">⠿ ドラッグで移動</div>
+  <div class="container">
+    <p class="sec-label">④ RECRUIT</p>
+    <h2 class="sec-title" contenteditable="true">仲間を募集しています</h2>
+    <div class="recruit-cards">
+      <div class="recruit-card">
+        <div class="rc-icon">👟</div>
+        <h3 contenteditable="true">初心者大歓迎</h3>
+        <p contenteditable="true">サッカーが初めてでも大丈夫。基礎からていねいに指導します。</p>
+      </div>
+      <div class="recruit-card">
+        <div class="rc-icon">👨‍👩‍👧‍👦</div>
+        <h3 contenteditable="true">家族みんなで</h3>
+        <p contenteditable="true">保護者の方も一緒に楽しめる温かいチームです。地域の輪を広げましょう。</p>
+      </div>
+      <div class="recruit-card">
+        <div class="rc-icon">🎁</div>
+        <h3 contenteditable="true">無料体験実施中</h3>
+        <p contenteditable="true">入会前に練習を体験できます。まずは気軽に来てみてください！</p>
+      </div>
+    </div>
+    <div class="recruit-info-bar">
+      <div class="ri-item"><h4>対象</h4><p contenteditable="true">小学1〜6年生</p></div>
+      <div class="ri-item"><h4>練習場所</h4><p contenteditable="true">新発田市内</p></div>
+      <div class="ri-item"><h4>練習日</h4><p contenteditable="true">週2〜3回（土日中心）</p></div>
+      <div class="ri-item"><h4>月会費</h4><p contenteditable="true">お問い合わせください</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑤ LINE -->
+<section id="line-section" class="page-section sortable-section">
+  <div class="drag-handle">⠿ ドラッグで移動</div>
+  <div class="container">
+    <p class="sec-label">⑤ OFFICIAL LINE</p>
+    <h2 class="sec-title" contenteditable="true">公式LINEはコチラ</h2>
+    <div class="line-wrap">
+      <div class="line-card">
+        <div class="line-logo">💬</div>
+        <h3>コオベール新発田FC<br>公式LINE</h3>
+        <p class="lc-desc" contenteditable="true">練習日程・試合情報・お知らせを<br>LINEでお届けします。<br>ぜひ友だち追加してください！</p>
+        <div class="line-url-row">
+          <div class="lu-label">OFFICIAL LINE URL</div>
+          <div id="line-url-display">（管理者がURLを設定してください）</div>
+        </div>
+        <a id="line-add-btn" href="#" class="line-add-btn" target="_blank" rel="noopener">友だち追加する ➔</a>
+        <div id="line-admin-wrap">
+          <label>🔧 LINE URL を設定（管理者のみ）</label>
+          <input type="url" id="line-url-input" placeholder="https://line.me/R/ti/p/@xxxxxxxx">
+          <button id="line-save-btn" onclick="saveLineUrl()">保存する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOARD -->
+<section id="board" class="page-section sortable-section">
+  <div class="drag-handle">⠿ ドラッグで移動</div>
+  <div class="container">
+    <p class="sec-label">NOTICE BOARD</p>
+    <h2 class="sec-title" contenteditable="true">お知らせ掲示板</h2>
+    <div class="admin-login-area" id="admin-area">
+      <input type="password" id="admin-pw" placeholder="管理者パスワード" onkeydown="if(event.key==='Enter')adminLogin()">
+      <button onclick="adminLogin()">ログイン</button>
+      <span id="admin-status"></span>
+    </div>
+    <button class="btn-new-post" onclick="showPostForm()">＋ お知らせを投稿する</button>
+    <div id="post-form-wrap">
+      <h3>📝 新しいお知らせを投稿</h3>
+      <input type="text" id="post-title" placeholder="タイトル（例：6/28 練習中止のお知らせ）" maxlength="60">
+      <textarea id="post-body" placeholder="内容を入力してください..." rows="4"></textarea>
+      <div class="post-form-actions">
+        <button class="btn-post" onclick="submitPost()">投稿する</button>
+        <button class="btn-cancel" onclick="hidePostForm()">キャンセル</button>
+      </div>
+    </div>
+    <div id="board-list"></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-logo">COOPERVE SHIBATA FC</div>
+  <p contenteditable="true">コオベール新発田FC ｜ 新潟県新発田市</p>
+  <p style="margin-top:6px">© 2025 Cooperve Shibata FC. All rights reserved.</p>
+</footer>
+
+<script>
+/* ===== 花びら ===== */
+const pc=document.getElementById('petals');
+for(let i=0;i<28;i++){
+  const p=document.createElement('div');p.classList.add('petal');
+  const s=8+Math.random()*12;
+  p.style.cssText=`left:${Math.random()*100}%;top:${-20-Math.random()*40}px;width:${s}px;height:${s}px;animation-duration:${5+Math.random()*8}s;animation-delay:${Math.random()*8}s;opacity:${0.4+Math.random()*0.5};border-radius:${Math.random()>.5?'50% 0 50% 0':'0 50% 0 50%'};`;
+  pc.appendChild(p);
+}
+
+/* ===== ギャラリー ===== */
+const GALLERY_KEY='cooperve_gallery';
+const GALLERY_COUNT=6;
+function loadGallery(){try{return JSON.parse(localStorage.getItem(GALLERY_KEY)||'[]')}catch{return[]}}
+function saveGallery(d){localStorage.setItem(GALLERY_KEY,JSON.stringify(d))}
+function renderGallery(){
+  const data=loadGallery();
+  const grid=document.getElementById('gallery-grid');
+  grid.innerHTML='';
+  for(let i=0;i<GALLERY_COUNT;i++){
+    const cell=document.createElement('div');
+    cell.className='gallery-cell';
+    cell.dataset.idx=i;
+    if(data[i]){
+      const img=document.createElement('img');
+      img.src=data[i];img.alt='活動写真'+(i+1);
+      cell.appendChild(img);
+    } else {
+      cell.innerHTML=`<div class="gc-placeholder"><span style="font-size:36px">📷</span><span>写真を追加</span></div>`;
+    }
+    cell.addEventListener('click',()=>onGalleryClick(i));
+    grid.appendChild(cell);
+  }
+}
+function onGalleryClick(idx){
+  if(!textEditActive)return;
+  const input=document.createElement('input');
+  input.type='file';input.accept='image/*';
+  input.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const data=loadGallery();
+      data[idx]=ev.target.result;
+      saveGallery(data);renderGallery();
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+renderGallery();
+
+/* ===== テキスト編集 ===== */
+let textEditActive=false;
+function toggleTextEdit(){
+  textEditActive=!textEditActive;
+  document.body.classList.toggle('edit-mode',textEditActive);
+  const btn=document.getElementById('btn-text');
+  btn.classList.toggle('active',textEditActive);
+  btn.textContent=textEditActive?'✅ 編集中（クリックで終了）':'✏️ テキスト編集';
+  if(textEditActive&&sortActive)toggleSortMode();
+}
+
+/* ===== 並び替え ===== */
+let sortActive=false,dragSrc=null;
+const getSections=()=>[...document.querySelectorAll('.sortable-section')];
+function toggleSortMode(){
+  sortActive=!sortActive;
+  document.body.classList.toggle('sort-mode',sortActive);
+  const btn=document.getElementById('btn-sort');
+  btn.classList.toggle('active',sortActive);
+  btn.textContent=sortActive?'✅ 並び替え中（クリックで終了）':'↕️ 並び替え';
+  if(sortActive&&textEditActive)toggleTextEdit();
+  getSections().forEach(sec=>{
+    if(sortActive){
+      sec.setAttribute('draggable','true');
+      sec.addEventListener('dragstart',onDragStart);
+      sec.addEventListener('dragover',onDragOver);
+      sec.addEventListener('dragleave',onDragLeave);
+      sec.addEventListener('drop',onDrop);
+      sec.addEventListener('dragend',onDragEnd);
+    } else {
+      sec.removeAttribute('draggable');
+      ['dragstart','dragover','dragleave','drop','dragend'].forEach(ev=>sec.removeEventListener(ev,{onDragStart,onDragOver,onDragLeave,onDrop,onDragEnd}[`on${ev[0].toUpperCase()}${ev.slice(1)}`]));
+    }
+  });
+}
+function onDragStart(e){dragSrc=this;this.classList.add('dragging');e.dataTransfer.effectAllowed='move'}
+function onDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';if(this!==dragSrc)this.classList.add('drag-over')}
+function onDragLeave(){this.classList.remove('drag-over')}
+function onDrop(e){
+  e.stopPropagation();
+  if(this!==dragSrc){
+    const parent=this.parentNode;
+    const si=[...parent.children].indexOf(dragSrc);
+    const di=[...parent.children].indexOf(this);
+    parent.insertBefore(dragSrc,si<di?this.nextSibling:this);
+  }
+  this.classList.remove('drag-over');
+}
+function onDragEnd(){getSections().forEach(s=>s.classList.remove('dragging','drag-over'));dragSrc=null}
+
+/* ===== HTML保存 ===== */
+function saveHTML(){
+  const wasText=textEditActive,wasSort=sortActive;
+  if(wasText)toggleTextEdit();if(wasSort)toggleSortMode();
+  const tb=document.getElementById('edit-toolbar');
+  const ts=document.getElementById('toast');
+  tb.style.display='none';ts.style.display='none';
+  const html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  tb.style.display='';ts.style.display='';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+  a.download='cooperve-shibata-fc.html';a.click();
+  ts.classList.add('show');setTimeout(()=>ts.classList.remove('show'),2500);
+  if(wasText)toggleTextEdit();if(wasSort)toggleSortMode();
+}
+
+/* ===== 公式LINE ===== */
+const LINE_KEY='cooperve_line_url';
+function loadLineUrl(){
+  const url=localStorage.getItem(LINE_KEY)||'';
+  document.getElementById('line-url-display').textContent=url||'（管理者がURLを設定してください）';
+  document.getElementById('line-add-btn').href=url||'#line-section';
+  const inp=document.getElementById('line-url-input');if(inp)inp.value=url;
+}
+function saveLineUrl(){
+  const url=document.getElementById('line-url-input').value.trim();
+  if(url&&!url.startsWith('http')){alert('https://から始まるURLを入力してください');return}
+  localStorage.setItem(LINE_KEY,url);loadLineUrl();
+  const btn=document.getElementById('line-save-btn');
+  btn.textContent='✅ 保存しました！';setTimeout(()=>btn.textContent='保存する',2000);
+}
+loadLineUrl();
+
+/* ===== 掲示板 ===== */
+const ADMIN_PW='cooperve2025';
+const BOARD_KEY='cooperve_board_posts';
+function loadPosts(){try{return JSON.parse(localStorage.getItem(BOARD_KEY)||'[]')}catch{return[]}}
+function savePosts(p){localStorage.setItem(BOARD_KEY,JSON.stringify(p))}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function renderPosts(){
+  const posts=loadPosts();
+  const list=document.getElementById('board-list');
+  if(!posts.length){list.innerHTML='<div class="board-empty">まだお知らせはありません。</div>';return}
+  list.innerHTML=posts.slice().reverse().map((p,ri)=>{
+    const idx=posts.length-1-ri;
+    return`<div class="board-card">
+      <div class="bc-header"><span class="bc-tag">📢 お知らせ</span><span class="bc-date">${p.date}</span></div>
+      <h4>${escHtml(p.title)}</h4><p>${escHtml(p.body)}</p>
+      <button class="bc-delete" onclick="deletePost(${idx})">削除</button>
+    </div>`;
+  }).join('');
+}
+function adminLogin(){
+  const pw=document.getElementById('admin-pw').value;
+  if(pw===ADMIN_PW){
+    document.body.classList.add('admin-logged');
+    document.getElementById('admin-area').style.display='none';
+    document.getElementById('admin-status').textContent='✅ 管理者ログイン中';
+    renderPosts();
+  } else {
+    const inp=document.getElementById('admin-pw');
+    inp.style.borderColor='#e55';setTimeout(()=>inp.style.borderColor='',1200);
+  }
+}
+function showPostForm(){document.getElementById('post-form-wrap').style.display='block';document.getElementById('post-title').focus()}
+function hidePostForm(){
+  document.getElementById('post-form-wrap').style.display='none';
+  document.getElementById('post-title').value='';
+  document.getElementById('post-body').value='';
+}
+function submitPost(){
+  const title=document.getElementById('post-title').value.trim();
+  const body=document.getElementById('post-body').value.trim();
+  if(!title||!body){alert('タイトルと内容を入力してください');return}
+  const posts=loadPosts();
+  const now=new Date();
+  const date=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
+  posts.push({title,body,date});savePosts(posts);hidePostForm();renderPosts();
+}
+function deletePost(idx){
+  if(!confirm('このお知らせを削除しますか？'))return;
+  const posts=loadPosts();posts.splice(idx,1);savePosts(posts);renderPosts();
+}
+renderPosts();
+</script>
+</body>
+</html>
